@@ -4,6 +4,7 @@
 
 #pragma once
 #include "afxwin.h"
+#include <string>
 
 
 // CHighVoltagePowerSupplyDlg dialog
@@ -34,5 +35,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedOk();
-	CButton m_OkButton;
+	CButton m_LogToFileButton;
 };

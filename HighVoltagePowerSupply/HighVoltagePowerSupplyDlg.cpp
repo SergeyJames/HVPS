@@ -58,7 +58,7 @@ CHighVoltagePowerSupplyDlg::CHighVoltagePowerSupplyDlg(CWnd* pParent /*=NULL*/)
 void CHighVoltagePowerSupplyDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDOK, m_OkButton);
+	DDX_Control(pDX, IDOK, m_LogToFileButton);
 }
 
 BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
@@ -145,6 +145,18 @@ void CHighVoltagePowerSupplyDlg::OnPaint()
 	{
 		CDialogEx::OnPaint();
 	}
+
+/*
+	CPaintDC dc(this); // device context for painting
+	CRect rcClient;
+	CWnd::GetClientRect(&rcClient);
+
+	CRect rect(rcClient.left, rcClient.top, 75, 23);
+
+	//CRect cr;
+	//m_OkButton.GetWindowRect(cr);
+
+	m_OkButton.MoveWindow(rect, true);*/
 }
 
 // The system calls this function to obtain the cursor to display while the user drags
@@ -157,6 +169,26 @@ HCURSOR CHighVoltagePowerSupplyDlg::OnQueryDragIcon()
 
 void CHighVoltagePowerSupplyDlg::OnBnClickedOk()
 {
-	// TODO: Add your control notification handler code here
+	std::string strFilter ="Text Files (*.txt)|*.txt|";
+	CString FileName;
+	CString FilePath;
+	CString FullPath;
+
+	CFileDialog FileDlg(FALSE, CString(".txt"), NULL, 0, CString(strFilter.c_str()));
+	
+	if (FileDlg.DoModal() == IDOK) {
+		FileName = FileDlg.GetFileName(); //filename
+		FilePath = FileDlg.GetFolderPath(); //filepath (folders)
+		FullPath = FilePath + "\\" + FileName;
+		/*
+			TODO:
+			.
+			.
+			.
+			.
+		*/
+
+	}
+
 	CDialogEx::OnOK();
 }
