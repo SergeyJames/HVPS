@@ -50,7 +50,9 @@ END_MESSAGE_MAP()
 
 
 CHighVoltagePowerSupplyDlg::CHighVoltagePowerSupplyDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(IDD_HIGHVOLTAGEPOWERSUPPLY_DIALOG, pParent)
+	: CDialogEx(IDD_HIGHVOLTAGEPOWERSUPPLY_DIALOG, pParent),
+	m_ulSliderVoltageToSetPos{ Min },
+	m_strSliderVoltageToSetPos { std::to_wstring(m_ulSliderVoltageToSetPos) }
 {
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -59,6 +61,11 @@ void CHighVoltagePowerSupplyDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDOK, m_LogToFileButton);
+	DDX_Control(pDX, IDC_BUTTON_ENABLE, m_EnableButton);
+	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_SPIN, m_VoltageToSetSpin);
+	DDX_Control(pDX, IDC_SPIN_VOLTAGE_TO_SET, m_VoltageToSetSpinCtrl);
+	DDX_Control(pDX, IDC_SLIDER_VOLTAGE_TO_SET, m_SliderVoltageToSet);
+	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_KEYBORD, m_VoltageToSetKeyboard);
 }
 
 BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
@@ -66,6 +73,9 @@ BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDOK, &CHighVoltagePowerSupplyDlg::OnBnClickedOk)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_VOLTAGE_TO_SET, &CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSet)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSet)
+	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybord)
 END_MESSAGE_MAP()
 
 
@@ -74,6 +84,12 @@ END_MESSAGE_MAP()
 BOOL CHighVoltagePowerSupplyDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	m_VoltageToSetSpinCtrl.SetRange(Min, Max);
+	m_VoltageToSetSpinCtrl.SetPos(Min);
+
+	m_SliderVoltageToSet.SetRange(Min, Max);
+	
 
 	// Add "About..." menu item to system menu.
 
@@ -145,18 +161,6 @@ void CHighVoltagePowerSupplyDlg::OnPaint()
 	{
 		CDialogEx::OnPaint();
 	}
-
-/*
-	CPaintDC dc(this); // device context for painting
-	CRect rcClient;
-	CWnd::GetClientRect(&rcClient);
-
-	CRect rect(rcClient.left, rcClient.top, 75, 23);
-
-	//CRect cr;
-	//m_OkButton.GetWindowRect(cr);
-
-	m_OkButton.MoveWindow(rect, true);*/
 }
 
 // The system calls this function to obtain the cursor to display while the user drags
@@ -175,20 +179,80 @@ void CHighVoltagePowerSupplyDlg::OnBnClickedOk()
 	CString FullPath;
 
 	CFileDialog FileDlg(FALSE, CString(".txt"), NULL, 0, CString(strFilter.c_str()));
-	
+
 	if (FileDlg.DoModal() == IDOK) {
 		FileName = FileDlg.GetFileName(); //filename
 		FilePath = FileDlg.GetFolderPath(); //filepath (folders)
 		FullPath = FilePath + "\\" + FileName;
 		/*
-			TODO:
-			.
-			.
-			.
-			.
+		TODO:
+		.
+		.
+		.
+		.
 		*/
+	}
+}
 
+void CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	std::wstring tmp;
+	if (pNMUpDown->iDelta < 0) {
+		if (pNMUpDown->iPos == 0) {
+			tmp = std::to_wstring(0);
+			m_VoltageToSetKeyboard.SetWindowTextW(tmp.c_str());
+			m_SliderVoltageToSet.SetPos(m_VoltageToSetSpinCtrl.GetPos());
+		}
+		else {
+			tmp = std::to_wstring(m_VoltageToSetSpinCtrl.GetPos() - 1);
+			m_VoltageToSetKeyboard.SetWindowTextW(tmp.c_str());
+			m_SliderVoltageToSet.SetPos(m_VoltageToSetSpinCtrl.GetPos() - 1);
+		}
+	}
+	else {
+		tmp = std::to_wstring(m_VoltageToSetSpinCtrl.GetPos() + 1);
+		m_VoltageToSetKeyboard.SetWindowTextW(tmp.c_str());
+		m_SliderVoltageToSet.SetPos(m_VoltageToSetSpinCtrl.GetPos() + 1);
 	}
 
-	CDialogEx::OnOK();
+	
+}
+
+
+
+void CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	m_ulSliderVoltageToSetPos = m_SliderVoltageToSet.GetPos();
+	m_strSliderVoltageToSetPos = std::to_wstring(m_ulSliderVoltageToSetPos);
+
+	m_VoltageToSetKeyboard.SetWindowTextW(m_strSliderVoltageToSetPos.c_str());
+	m_VoltageToSetSpin.SetWindowTextW(m_strSliderVoltageToSetPos.c_str());
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybord()
+{
+	CString text;
+	m_VoltageToSetKeyboard.GetWindowTextW(text);
+	std::wstring wstext = text;
+
+	if (!wstext.empty()) {
+		m_SliderVoltageToSet.SetPos(std::stol(wstext));
+	}
+
+	
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
 }
