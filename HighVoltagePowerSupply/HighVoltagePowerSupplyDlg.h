@@ -4,11 +4,19 @@
 
 #pragma once
 #include "afxwin.h"
-#include <string>
 #include "afxcmn.h"
+#include <string>
+#include <vector>
+#include <minwindef.h>
+#include <winperf.h>
 
 const unsigned long Min = 0;
 const unsigned long Max = 30000;
+
+/// this defination for GetComPortList() function
+#define MAX_KEY_LENGTH 255
+#define MAX_VALUE_NAME 16383
+
 
 // CHighVoltagePowerSupplyDlg dialog
 class CHighVoltagePowerSupplyDlg : public CDialogEx
@@ -22,7 +30,7 @@ public:
 	enum { IDD = IDD_HIGHVOLTAGEPOWERSUPPLY_DIALOG };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
 
@@ -53,9 +61,18 @@ private: // Voltage To Set Variables
 	CSpinButtonCtrl m_VoltageToSetSpinCtrl;
 	CSliderCtrl m_SliderVoltageToSet;
 
+	CComboBox m_ComPortCmbBox;
+
+
 private: // Voltage To Set Variables
 	unsigned long m_ulSliderVoltageToSetPos; // The slider position
 	std::wstring m_strSliderVoltageToSetPos;	// The slider position (std::string)
+	void GetComPortList();
+	std::vector<std::wstring> m_ComPortVec;
 public:
 	afx_msg void OnEnChangeEditVoltageToSetKeybord();
+private:
+	CEdit m_InternalTempEdit;
+	CEdit m_PowerTempEdit;
+	CEdit m_HumidityEdit;
 };

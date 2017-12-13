@@ -66,6 +66,10 @@ void CHighVoltagePowerSupplyDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SPIN_VOLTAGE_TO_SET, m_VoltageToSetSpinCtrl);
 	DDX_Control(pDX, IDC_SLIDER_VOLTAGE_TO_SET, m_SliderVoltageToSet);
 	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_KEYBORD, m_VoltageToSetKeyboard);
+	DDX_Control(pDX, IDC_COMBO_COM_PORT, m_ComPortCmbBox);
+	DDX_Control(pDX, IDC_EDIT_INTERNAL_DATA, m_InternalTempEdit);
+	DDX_Control(pDX, IDC_EDIT_POWER_TEMP, m_PowerTempEdit);
+	DDX_Control(pDX, IDC_EDIT_Humidity, m_HumidityEdit);
 }
 
 BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
@@ -84,12 +88,19 @@ END_MESSAGE_MAP()
 BOOL CHighVoltagePowerSupplyDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
+	
 	m_VoltageToSetSpinCtrl.SetRange(Min, Max);
 	m_VoltageToSetSpinCtrl.SetPos(Min);
 
 	m_SliderVoltageToSet.SetRange(Min, Max);
 	
+	GetComPortList();
+	if (!m_ComPortVec.empty()) {
+		std::vector<std::wstring>::const_iterator it = m_ComPortVec.begin();
+		for ( ; it != m_ComPortVec.end(); ++it) {
+			m_ComPortCmbBox.AddString((*it).c_str());
+		}
+	}
 
 	// Add "About..." menu item to system menu.
 
@@ -222,8 +233,6 @@ void CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSet(NMHDR *pNMHDR, LRESU
 	
 }
 
-
-
 void CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
@@ -237,7 +246,6 @@ void CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSet(NMHDR *pNMHDR,
 	m_VoltageToSetSpin.SetWindowTextW(m_strSliderVoltageToSetPos.c_str());
 }
 
-
 void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybord()
 {
 	CString text;
@@ -248,11 +256,194 @@ void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybord()
 		m_SliderVoltageToSet.SetPos(std::stol(wstext));
 	}
 
-	
+
 	// TODO:  If this is a RICHEDIT control, the control will not
 	// send this notification unless you override the CDialogEx::OnInitDialog()
 	// function and call CRichEditCtrl().SetEventMask()
 	// with the ENM_CHANGE flag ORed into the mask.
 
 	// TODO:  Add your control notification handler code here
+}
+
+
+void CHighVoltagePowerSupplyDlg::GetComPortList()
+{
+	HKEY hKey;
+	LONG lResult;
+
+	DWORD typeValue;
+	TCHAR data[MAX_PATH] = TEXT("aa");
+	CHAR dataChar[MAX_PATH] = "aa";
+	DWORD MaxData = sizeof(data);
+
+	DWORD BufferSize = 32;//TOTALBYTES;
+	PPERF_DATA_BLOCK PerfData = (PPERF_DATA_BLOCK)malloc(BufferSize);
+
+	TCHAR achValue[MAX_VALUE_NAME] = {};
+	DWORD cchValue = MAX_VALUE_NAME;
+
+
+	TCHAR  achClass[MAX_PATH] = TEXT(""); // buffer for class name 
+	DWORD  cchClassName = MAX_PATH; // size of class string 
+	DWORD  cValues;       // number of values for key 
+	DWORD  cchMaxValue;     // longest value name 
+	DWORD  cbMaxValueData;    // longest value data 
+	DWORD  cbSecurityDescriptor; // size of security descriptor 
+	FILETIME ftLastWriteTime;   // last write time 
+
+	lResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("HARDWARE\\DEVICEMAP\\SERIALCOMM"), NULL, KEY_READ, &hKey);
+	
+	/*if (lResult != ERROR_SUCCESS) {
+		if (lResult == ERROR_FILE_NOT_FOUND) {
+			MessageBoxEx(0, TEXT("Ключ реестра не найден"), TEXT("Ошибка"), MB_ICONERROR | MB_OK, NULL);
+
+		}
+		else {
+			MessageBoxEx(0, TEXT("Ошибка открытия ключа реестра"), TEXT("Ошибка"), MB_ICONERROR | MB_OK, NULL);
+			return "";
+		}
+	}*/
+
+	// Get the class name and the value count. 
+	lResult = RegQueryInfoKey(
+		hKey,          // key handle 
+		achClass,        // buffer for class name 
+		&cchClassName,      // size of class string 
+		NULL,          // reserved 
+		NULL,//&cSubKeys,        // number of subkeys 
+		NULL,//&cbMaxSubKey,      // longest subkey size 
+		NULL,//&cchMaxClass,      // longest class string 
+		&cValues,        // number of values for this key 
+		&cchMaxValue,      // longest value name 
+		&cbMaxValueData,     // longest value data 
+		&cbSecurityDescriptor,  // security descriptor 
+		&ftLastWriteTime);    // last write time 
+
+	if (cValues) {
+		for (size_t i = 0, lResult = ERROR_SUCCESS; i < cValues; ++i) {
+			cchValue = MAX_VALUE_NAME;
+			achValue[0] = '\0';
+
+			lResult = RegEnumValue(hKey, i, achValue, &cchValue, NULL, &typeValue, (BYTE*)data, &MaxData);
+			if (lResult == ERROR_SUCCESS) {
+				//В переменной data имеем имя COM порта
+				m_ComPortVec.push_back(data);
+			}
+		}
+	}
+
+	RegCloseKey(hKey);
+
+	////После того, как имя COM порта получено, дальнейшая работа с ним происходит как с файлом.Но для начала нам надо его настроить
+
+	//HANDLE Port;   //Дескриптор COM-порта
+	//			   //Открываем COM-порт
+	//			   // data - Имя COM-порта
+	//Port = CreateFile(data, (GENERIC_READ | GENERIC_WRITE), FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	//if (Port == INVALID_HANDLE_VALUE) {
+	//	MessageBox(NULL, TEXT("Невозможно открыть последовательный порт"), TEXT("Error"), MB_OK);
+	//	return "";
+	//}
+
+	////Получаем состояние управляющей структуры COM-порта, 
+	////если не удалось выводим сообщение об ошибке и выходим из 
+	////обработчика
+	//COMMCONFIG comm;
+	//GetCommState(Port, &comm.dcb);
+
+	////Настраиваем управляющую структуру COM-порта
+	//comm.dcb.ByteSize = 8;        //Размер байта
+	//comm.dcb.Parity = NOPARITY;    //Паритет отключен
+	//comm.dcb.StopBits = ONESTOPBIT;//Один стоповый бит
+	//							   //Можно также воспользоваться стандартным диалоговым
+	//							   //окном настройки управляющей структуры COM-порта:
+
+	//							   // CommConfigDialog(data, NULL, &comm); /// временно не нужен
+
+	//							   //Применяем настроенную структуру к COM-порту, если не 
+	//							   //удалось выводим сообщение об ошибке 
+	//if (!SetCommState(Port, &comm.dcb)) {
+	//	MessageBox(NULL, TEXT("Невозможно сконфигурировать последовательный порт"), TEXT("Error"), MB_OK);
+	//	CloseHandle(Port);
+	//	return "";
+	//}
+
+	////Получаем текущие настройки тайм-аутов COM-порта
+	//COMMTIMEOUTS commTimeouts;
+	//GetCommTimeouts(Port, &commTimeouts);
+
+	////Перенастраиваем тайм-ауты: 
+	////Максимальный интервал чтения в миллисекундах между 
+	////двумя принимаемыми символами
+	//commTimeouts.ReadIntervalTimeout = 100;
+	////Константа в миллисекундах используемая для вычисления 
+	////полного тайм-аута операции чтения
+	//commTimeouts.ReadTotalTimeoutConstant = 300;
+	////Множитель используемый для вычисления полного тайм-аута
+	////операции чтения в миллисекундах
+	//commTimeouts.ReadTotalTimeoutMultiplier = 50;
+	////Полный максимальный тайм-аут операции чтения 
+	////вычисляется следующим образом //ReadTotalTimeoutConstant + (ReadIntervalTimeout * количество считываемых байт)
+
+	////Устанавливаем тайм-ауты для COM-порта
+	//if (!SetCommTimeouts(Port, &commTimeouts)) {
+	//	MessageBox(NULL, TEXT("Невозможно настроить тайм-ауты последовательного порта"), TEXT("Error"), MB_OK);
+	//	CloseHandle(Port);
+	//	return "";
+	//}
+	////Передача данных по COM - порту выглядит следующим образом :
+
+	//DWORD feedback = 0;
+	////LONG lResult; //Помещаем сюда количество данных, которые
+	//// необходимо передать
+	////if ((!WriteFile(Port, &data[0], lResult * sizeof(data[0]), &feedback, 0) || feedback != lResult * sizeof(data[/*i*/0]))) {
+	////	CloseHandle(Port);
+	////	Port = INVALID_HANDLE_VALUE;
+	////}
+	////При передаче мы проверяем количество переданных байт, и вообще удалось ли выполнить передачу.
+
+
+	//TCHAR send[MAX_PATH] = {};
+
+	//for (size_t i = 0; i < a_str.size(); ++i) {
+	//	send[i] = a_str.at(i);
+	//}
+
+	//TCHAR save[MAX_PATH] = {};
+
+
+	//WriteFile(Port, &send, sizeof(send), &feedback, NULL);
+
+
+	////Чтение данных можно реализовать следующим образом(лучше это делать по таймеру) :
+	//feedback = 0; /*DWORD*/
+	//int i = 0;
+	////Попытка чтения первого символа хранящегося в COM-порте
+	//ReadFile(Port, &save, sizeof(save), &feedback, NULL);
+
+	///*if (feedback > 0)	{
+	////Если чтение удалось продолжаем чтение пока не встретится символ #13
+	//do {
+	//send[i] = save[i];
+	//ReadFile(Port, &save, sizeof(save), &feedback, NULL);
+	//++i;
+	//} while (feedback > 0);
+	//send[i] = '\0';
+	//}
+	//*/
+
+
+	////И закрываем порт после работы :
+	//if (Port != INVALID_HANDLE_VALUE)
+	//{    //Если порт открыт
+	//	CloseHandle(Port);
+	//}
+
+	//string tmp;
+	//for (size_t i = 0; i < sizeof(save); ++i) {
+	//	if (save[i] != '\0') {
+	//		tmp.push_back(save[i]);
+	//	}
+	//}
 }
