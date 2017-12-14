@@ -10,8 +10,8 @@
 #include <minwindef.h>
 #include <winperf.h>
 
-const unsigned long Min = 0;
-const unsigned long Max = 30000;
+const unsigned long AcceleratorMin = 0;
+const unsigned long AcceleratorMax = 30000;
 
 /// this defination for GetComPortList() function
 #define MAX_KEY_LENGTH 255
@@ -47,32 +47,57 @@ protected:
 public:
 	afx_msg void OnBnClickedOk();
 
-public: // Voltage To Set Methodes
-	afx_msg void OnDeltaposSpinVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnNMCustomdrawSliderVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult);
-
-private: // Voltage To Set Variables
-	CButton m_LogToFileButton;
-	CButton m_EnableButton;
-
-	CEdit m_VoltageToSetSpin;
-	CEdit m_VoltageToSetKeyboard;
-
-	CSpinButtonCtrl m_VoltageToSetSpinCtrl;
-	CSliderCtrl m_SliderVoltageToSet;
+private: // Other Variables
 
 	CComboBox m_ComPortCmbBox;
-
-
-private: // Voltage To Set Variables
-	unsigned long m_ulSliderVoltageToSetPos; // The slider position
-	std::wstring m_strSliderVoltageToSetPos;	// The slider position (std::string)
-	void GetComPortList();
-	std::vector<std::wstring> m_ComPortVec;
-public:
-	afx_msg void OnEnChangeEditVoltageToSetKeybord();
-private:
 	CEdit m_InternalTempEdit;
 	CEdit m_PowerTempEdit;
 	CEdit m_HumidityEdit;
+
+	CButton m_LogToFileButton;
+	CButton m_EnableButton;
+
+	static bool m_bIsComPortListEmpty;
+
+public: // Accelerator Methodes
+	afx_msg void OnDeltaposSpinVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMCustomdrawSliderVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult);
+
+private: // Accelerator Variables
+
+	CEdit m_VoltageToSetSpin;
+	CEdit m_VoltageToSetKeyboard;
+	CSliderCtrl m_SliderVoltageToSet;
+	CSpinButtonCtrl m_VoltageToSetSpinCtrl;
+
+
+	unsigned long m_ulSliderVoltageToSetPos; // The slider position
+	std::wstring m_strSliderVoltageToSetPos;	// The slider position (std::string)
+	std::vector<std::wstring> m_ComPortVec;
+
+private: // BIAS Variables
+
+	CEdit m_VoltageToSetSpinBias;
+	CEdit m_VoltageToSetKeyboardBias;
+	CSliderCtrl m_SliderVoltageToSetBias;
+	CSpinButtonCtrl m_VoltageToSetSpinCtrlBias;
+
+	
+private: // FLAMENT Variables
+
+	CEdit m_VoltageToSetSpinFlament;
+	CEdit m_VoltageToSetKeyboardFlament;
+	CSliderCtrl m_SliderVoltageToSetFlament;
+	CSpinButtonCtrl m_VoltageToSetSpinCtrlFlament;
+
+public:
+	afx_msg void OnEnChangeEditVoltageToSetKeybord();
+
+private:
+	void SetAllSpinCtrlRanges();
+	void SetAllSliderRanges();
+	void FillComPortList();
+	void FillComPortComboBox();
+public:
+	afx_msg void OnBnClickedButtonUpdateCom();
 };

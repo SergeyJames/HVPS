@@ -47,13 +47,17 @@ END_MESSAGE_MAP()
 
 // CHighVoltagePowerSupplyDlg dialog
 
-
+bool CHighVoltagePowerSupplyDlg::m_bIsComPortListEmpty = { true };
 
 CHighVoltagePowerSupplyDlg::CHighVoltagePowerSupplyDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_HIGHVOLTAGEPOWERSUPPLY_DIALOG, pParent),
-	m_ulSliderVoltageToSetPos{ Min },
+	m_ulSliderVoltageToSetPos{ AcceleratorMin },
 	m_strSliderVoltageToSetPos { std::to_wstring(m_ulSliderVoltageToSetPos) }
 {
+	FillComPortList();
+
+	m_bIsComPortListEmpty = m_ComPortVec.empty();
+
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -70,6 +74,14 @@ void CHighVoltagePowerSupplyDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_INTERNAL_DATA, m_InternalTempEdit);
 	DDX_Control(pDX, IDC_EDIT_POWER_TEMP, m_PowerTempEdit);
 	DDX_Control(pDX, IDC_EDIT_Humidity, m_HumidityEdit);
+	DDX_Control(pDX, IDC_SLIDER_VOLTAGE_TO_SET_BIAS, m_SliderVoltageToSetBias);
+	DDX_Control(pDX, IDC_SLIDER_VOLTAGE_TO_SET_BIAS2, m_SliderVoltageToSetFlament);
+	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS, m_VoltageToSetKeyboardBias);
+	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_SPIN_BIAS, m_VoltageToSetSpinBias);
+	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_SPIN_BIAS2, m_VoltageToSetSpinFlament);
+	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS2, m_VoltageToSetKeyboardFlament);
+	DDX_Control(pDX, IDC_SPIN_VOLTAGE_TO_SET_BIAS, m_VoltageToSetSpinCtrlBias);
+	DDX_Control(pDX, IDC_SPIN_VOLTAGE_TO_SET_BIAS2, m_VoltageToSetSpinCtrlFlament);
 }
 
 BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
@@ -80,6 +92,7 @@ BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_VOLTAGE_TO_SET, &CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSet)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSet)
 	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybord)
+	ON_BN_CLICKED(IDC_BUTTON_UPDATE_COM, &CHighVoltagePowerSupplyDlg::OnBnClickedButtonUpdateCom)
 END_MESSAGE_MAP()
 
 
@@ -89,19 +102,11 @@ BOOL CHighVoltagePowerSupplyDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	
-	m_VoltageToSetSpinCtrl.SetRange(Min, Max);
-	m_VoltageToSetSpinCtrl.SetPos(Min);
+	SetAllSpinCtrlRanges();
+	SetAllSliderRanges();
+	FillComPortComboBox();
 
-	m_SliderVoltageToSet.SetRange(Min, Max);
 	
-	GetComPortList();
-	if (!m_ComPortVec.empty()) {
-		std::vector<std::wstring>::const_iterator it = m_ComPortVec.begin();
-		for ( ; it != m_ComPortVec.end(); ++it) {
-			m_ComPortCmbBox.AddString((*it).c_str());
-		}
-	}
-
 	// Add "About..." menu item to system menu.
 
 	// IDM_ABOUTBOX must be in the system command range.
@@ -265,8 +270,48 @@ void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybord()
 	// TODO:  Add your control notification handler code here
 }
 
+void CHighVoltagePowerSupplyDlg::SetAllSpinCtrlRanges()
+{
+	// Accelerator
+	m_VoltageToSetSpinCtrl.SetRange(AcceleratorMin, AcceleratorMax);
+	m_VoltageToSetSpinCtrl.SetPos(AcceleratorMin);
 
-void CHighVoltagePowerSupplyDlg::GetComPortList()
+	// BIAS 
+	m_VoltageToSetSpinCtrlBias.SetRange(0, 10); // temp min max
+	m_VoltageToSetSpinCtrlBias.SetPos(0); // temp min max
+
+	// FLAMENT
+	m_VoltageToSetSpinCtrlFlament.SetRange(0, 10); // temp min max
+	m_VoltageToSetSpinCtrlFlament.SetPos(0); // temp min max
+}
+
+void CHighVoltagePowerSupplyDlg::SetAllSliderRanges()
+{
+	// Accelerator
+	m_SliderVoltageToSet.SetRange(AcceleratorMin, AcceleratorMax);
+
+	// BIAS 
+	m_SliderVoltageToSetBias.SetRange(0, 10); // temp min max
+
+	// FLAMENT
+	m_SliderVoltageToSetFlament.SetRange(0, 10); // temp min max
+
+}
+
+void CHighVoltagePowerSupplyDlg::FillComPortComboBox()
+{
+	if (!m_ComPortVec.empty()) {
+		std::vector<std::wstring>::const_iterator it = m_ComPortVec.begin();
+		for (; it != m_ComPortVec.end(); ++it) {
+			m_ComPortCmbBox.AddString((*it).c_str());
+		}
+	}
+	else {
+		m_ComPortCmbBox.AddString(LR"(empty)");
+	}
+}
+
+void CHighVoltagePowerSupplyDlg::FillComPortList()
 {
 	HKEY hKey;
 	LONG lResult;
@@ -446,4 +491,17 @@ void CHighVoltagePowerSupplyDlg::GetComPortList()
 	//		tmp.push_back(save[i]);
 	//	}
 	//}
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnBnClickedButtonUpdateCom()
+{
+	m_ComPortCmbBox.ResetContent();
+
+	// Обязательно 
+	m_ComPortVec.clear();
+	m_ComPortVec.shrink_to_fit();
+
+	FillComPortList();
+	FillComPortComboBox();
 }
