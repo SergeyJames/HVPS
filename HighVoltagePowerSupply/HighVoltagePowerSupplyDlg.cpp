@@ -48,11 +48,13 @@ END_MESSAGE_MAP()
 // CHighVoltagePowerSupplyDlg dialog
 
 bool CHighVoltagePowerSupplyDlg::m_bIsComPortListEmpty = { true };
+int  CHighVoltagePowerSupplyDlg::m_SpinCtrlBiasPos = 0;
 
 CHighVoltagePowerSupplyDlg::CHighVoltagePowerSupplyDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_HIGHVOLTAGEPOWERSUPPLY_DIALOG, pParent),
 	m_ulSliderVoltageToSetPos{ AcceleratorMin },
-	m_strSliderVoltageToSetPos { std::to_wstring(m_ulSliderVoltageToSetPos) }
+	m_strSliderVoltageToSetPos { std::to_wstring(m_ulSliderVoltageToSetPos) },
+	m_dValue{ 0.0 }
 {
 	FillComPortList();
 
@@ -93,6 +95,8 @@ BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSet)
 	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybord)
 	ON_BN_CLICKED(IDC_BUTTON_UPDATE_COM, &CHighVoltagePowerSupplyDlg::OnBnClickedButtonUpdateCom)
+	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_VOLTAGE_TO_SET_BIAS, &CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias)
 END_MESSAGE_MAP()
 
 
@@ -105,6 +109,8 @@ BOOL CHighVoltagePowerSupplyDlg::OnInitDialog()
 	SetAllSpinCtrlRanges();
 	SetAllSliderRanges();
 	FillComPortComboBox();
+	m_VoltageToSetSpinBias.SetWindowTextW(L"0.0");
+
 
 	
 	// Add "About..." menu item to system menu.
@@ -277,7 +283,7 @@ void CHighVoltagePowerSupplyDlg::SetAllSpinCtrlRanges()
 	m_VoltageToSetSpinCtrl.SetPos(AcceleratorMin);
 
 	// BIAS 
-	m_VoltageToSetSpinCtrlBias.SetRange(0, 10); // temp min max
+	m_VoltageToSetSpinCtrlBias.SetRange(0, 100); // temp min max
 	m_VoltageToSetSpinCtrlBias.SetPos(0); // temp min max
 
 	// FLAMENT
@@ -291,7 +297,7 @@ void CHighVoltagePowerSupplyDlg::SetAllSliderRanges()
 	m_SliderVoltageToSet.SetRange(AcceleratorMin, AcceleratorMax);
 
 	// BIAS 
-	m_SliderVoltageToSetBias.SetRange(0, 10); // temp min max
+	m_SliderVoltageToSetBias.SetRange(0, 100); // temp min max
 
 	// FLAMENT
 	m_SliderVoltageToSetFlament.SetRange(0, 10); // temp min max
@@ -308,6 +314,13 @@ void CHighVoltagePowerSupplyDlg::FillComPortComboBox()
 	}
 	else {
 		m_ComPortCmbBox.AddString(LR"(empty)");
+	}
+}
+
+void CHighVoltagePowerSupplyDlg::RemoveZeros(std::wstring& a_wstr)
+{
+	for (size_t i = 0; i < 5; ++i) {
+		a_wstr.pop_back();
 	}
 }
 
@@ -504,4 +517,90 @@ void CHighVoltagePowerSupplyDlg::OnBnClickedButtonUpdateCom()
 
 	FillComPortList();
 	FillComPortComboBox();
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias()
+{
+	CString text;
+	m_VoltageToSetKeyboardBias.GetWindowTextW(text);
+	std::wstring wstext = text;
+	double dValue = 0.0;
+
+
+	try	{
+		if (!wstext.empty()) {
+			dValue = boost::lexical_cast<double>(wstext);
+		}
+	}
+	catch (...)
+	{
+		MessageBoxA(this->m_hWnd, "Please type Integer or Float values ( 0.0 <= value <= 10.0), charachters not allowed", "", 48);
+		SendMessageA(m_VoltageToSetKeyboardBias, WM_SETTEXT, WPARAM(0), LPARAM(""));
+	}
+
+	// temp min max ( 0.0 and 10.0 )
+	if (dValue <= 0.0) {
+		m_SliderVoltageToSetBias.SetPos(0);
+		m_dValue = 0.0;
+	}
+	else if (dValue > 10.0) {
+		m_SliderVoltageToSetBias.SetPos(100);
+		m_dValue = 10.0;
+		SendMessageA(m_VoltageToSetKeyboardBias, WM_SETTEXT, WPARAM(0), LPARAM("10.0"));
+	}
+	else if (dValue >= 0.0 && dValue <= 10.0) {
+		m_SliderVoltageToSetBias.SetPos(dValue * 10);
+		m_dValue = dValue;
+	}
+
+
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+}
+
+
+
+void CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	float d = 0.0;
+
+	std::wstring tmp;
+	if (pNMUpDown->iDelta < 0) {
+		if (pNMUpDown->iPos == 0) {
+			tmp = std::to_wstring(0.0);
+			m_VoltageToSetSpinBias.SetWindowTextW(L"0.0");
+			m_SliderVoltageToSetBias.SetPos(0);
+		}
+		else {
+			m_SpinCtrlBiasPos = pNMUpDown->iPos - 1;
+			d = m_SpinCtrlBiasPos / 10.0;
+			tmp = std::to_wstring(d);
+			RemoveZeros(tmp);
+			m_VoltageToSetSpinBias.SetWindowTextW(tmp.c_str());
+			m_SliderVoltageToSetBias.SetPos(m_SpinCtrlBiasPos - 1);
+		}
+	}
+	else {
+		if (pNMUpDown->iPos == 100) {
+			m_SpinCtrlBiasPos = pNMUpDown->iPos;
+		}
+		else if (pNMUpDown->iPos < 100) {
+			m_SpinCtrlBiasPos = pNMUpDown->iPos + 1;
+		}
+	
+		d = m_SpinCtrlBiasPos / 10.0;
+		tmp = std::to_wstring(d);
+		RemoveZeros(tmp);
+		m_VoltageToSetSpinBias.SetWindowTextW(tmp.c_str());
+		m_SliderVoltageToSetBias.SetPos(m_SpinCtrlBiasPos + 1);
+	}
 }

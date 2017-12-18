@@ -81,7 +81,9 @@ private: // BIAS Variables
 	CEdit m_VoltageToSetKeyboardBias;
 	CSliderCtrl m_SliderVoltageToSetBias;
 	CSpinButtonCtrl m_VoltageToSetSpinCtrlBias;
+	static int m_SpinCtrlBiasPos;
 
+	double m_dValue;
 	
 private: // FLAMENT Variables
 
@@ -98,6 +100,9 @@ private:
 	void SetAllSliderRanges();
 	void FillComPortList();
 	void FillComPortComboBox();
+	void RemoveZeros(std::wstring& a_wstr);
 public:
 	afx_msg void OnBnClickedButtonUpdateCom();
+	afx_msg void OnEnChangeEditVoltageToSetKeybordBias();
+	afx_msg void OnDeltaposSpinVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult);
 };
