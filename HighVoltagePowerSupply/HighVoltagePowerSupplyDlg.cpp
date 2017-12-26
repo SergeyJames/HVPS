@@ -54,7 +54,8 @@ CHighVoltagePowerSupplyDlg::CHighVoltagePowerSupplyDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_HIGHVOLTAGEPOWERSUPPLY_DIALOG, pParent),
 	m_ulSliderVoltageToSetPos{ AcceleratorMin },
 	m_strSliderVoltageToSetPos { std::to_wstring(m_ulSliderVoltageToSetPos) },
-	m_dValue{ 0.0 }
+	m_dValue{ 0.0 },
+	m_ulSliderVoltageToSetPosBias{ 0.0 }
 {
 	FillComPortList();
 
@@ -97,6 +98,7 @@ BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_UPDATE_COM, &CHighVoltagePowerSupplyDlg::OnBnClickedButtonUpdateCom)
 	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_VOLTAGE_TO_SET_BIAS, &CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET_BIAS, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias)
 END_MESSAGE_MAP()
 
 
@@ -542,25 +544,22 @@ void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias()
 	// temp min max ( 0.0 and 10.0 )
 	if (dValue <= 0.0) {
 		m_SliderVoltageToSetBias.SetPos(0);
+		m_VoltageToSetSpinBias.SetWindowTextW(L"0");;
 		m_dValue = 0.0;
 	}
 	else if (dValue > 10.0) {
 		m_SliderVoltageToSetBias.SetPos(100);
+		m_VoltageToSetSpinBias.SetWindowTextW(L"10.0");;
 		m_dValue = 10.0;
 		SendMessageA(m_VoltageToSetKeyboardBias, WM_SETTEXT, WPARAM(0), LPARAM("10.0"));
 	}
 	else if (dValue >= 0.0 && dValue <= 10.0) {
 		m_SliderVoltageToSetBias.SetPos(dValue * 10);
 		m_dValue = dValue;
+		std::wstring tmp = std::to_wstring(dValue);
+		RemoveZeros(tmp);
+		m_VoltageToSetSpinBias.SetWindowTextW(tmp.c_str());
 	}
-
-
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 }
 
 
@@ -571,9 +570,11 @@ void CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias(NMHDR *pNMHDR, L
 	// TODO: Add your control notification handler code here
 	*pResult = 0;
 
-	float d = 0.0;
+	pNMUpDown->iPos = m_dValue * 10;
 
+	float d = 0.0;
 	std::wstring tmp;
+
 	if (pNMUpDown->iDelta < 0) {
 		if (pNMUpDown->iPos == 0) {
 			tmp = std::to_wstring(0.0);
@@ -587,6 +588,7 @@ void CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias(NMHDR *pNMHDR, L
 			RemoveZeros(tmp);
 			m_VoltageToSetSpinBias.SetWindowTextW(tmp.c_str());
 			m_SliderVoltageToSetBias.SetPos(m_SpinCtrlBiasPos - 1);
+			m_VoltageToSetKeyboardBias.SetWindowTextW(tmp.c_str());
 		}
 	}
 	else {
@@ -602,5 +604,22 @@ void CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias(NMHDR *pNMHDR, L
 		RemoveZeros(tmp);
 		m_VoltageToSetSpinBias.SetWindowTextW(tmp.c_str());
 		m_SliderVoltageToSetBias.SetPos(m_SpinCtrlBiasPos + 1);
+		m_VoltageToSetKeyboardBias.SetWindowTextW(tmp.c_str());
 	}
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	m_ulSliderVoltageToSetPosBias = m_SliderVoltageToSetBias.GetPos() / 10.0;
+	std::wstring tmp = std::to_wstring(m_ulSliderVoltageToSetPosBias);
+	RemoveZeros(tmp);
+	m_strSliderVoltageToSetPosBias = tmp;
+
+	m_VoltageToSetKeyboardBias.SetWindowTextW(m_strSliderVoltageToSetPosBias.c_str());
+	m_VoltageToSetSpinBias.SetWindowTextW(m_strSliderVoltageToSetPosBias.c_str());
 }

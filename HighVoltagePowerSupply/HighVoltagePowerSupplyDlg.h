@@ -23,7 +23,7 @@ class CHighVoltagePowerSupplyDlg : public CDialogEx
 {
 // Construction
 public:
-	CHighVoltagePowerSupplyDlg(CWnd* pParent = NULL);	// standard constructor
+	CHighVoltagePowerSupplyDlg(CWnd* pParent = nullptr);	// standard constructor
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -84,6 +84,9 @@ private: // BIAS Variables
 	static int m_SpinCtrlBiasPos;
 
 	double m_dValue;
+
+	double m_ulSliderVoltageToSetPosBias; // The slider position
+	std::wstring m_strSliderVoltageToSetPosBias;	// The slider position (std::string)
 	
 private: // FLAMENT Variables
 
@@ -92,8 +95,6 @@ private: // FLAMENT Variables
 	CSliderCtrl m_SliderVoltageToSetFlament;
 	CSpinButtonCtrl m_VoltageToSetSpinCtrlFlament;
 
-public:
-	afx_msg void OnEnChangeEditVoltageToSetKeybord();
 
 private:
 	void SetAllSpinCtrlRanges();
@@ -105,4 +106,6 @@ public:
 	afx_msg void OnBnClickedButtonUpdateCom();
 	afx_msg void OnEnChangeEditVoltageToSetKeybordBias();
 	afx_msg void OnDeltaposSpinVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMCustomdrawSliderVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnEnChangeEditVoltageToSetKeybord();
 };
