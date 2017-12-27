@@ -99,6 +99,7 @@ BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_VOLTAGE_TO_SET_BIAS, &CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET_BIAS, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias)
+	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS2, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias2)
 END_MESSAGE_MAP()
 
 
@@ -622,4 +623,13 @@ void CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias(NMHDR *pNM
 
 	m_VoltageToSetKeyboardBias.SetWindowTextW(m_strSliderVoltageToSetPosBias.c_str());
 	m_VoltageToSetSpinBias.SetWindowTextW(m_strSliderVoltageToSetPosBias.c_str());
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias2()
+{
+	CString text;
+	m_VoltageToSetKeyboardFlament.GetWindowTextW(text);
+	std::wstring wstext = text;
+	double dValue = 0.0;
 }

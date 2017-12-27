@@ -108,4 +108,5 @@ public:
 	afx_msg void OnDeltaposSpinVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMCustomdrawSliderVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnChangeEditVoltageToSetKeybord();
+	afx_msg void OnEnChangeEditVoltageToSetKeybordBias2();
 };
