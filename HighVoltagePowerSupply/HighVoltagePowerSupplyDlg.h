@@ -33,7 +33,6 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
-
 // Implementation
 protected:
 	HICON m_hIcon;
@@ -85,7 +84,7 @@ private: // BIAS Variables
 
 	double m_dValue;
 
-	double m_ulSliderVoltageToSetPosBias; // The slider position
+	double m_dSliderVoltageToSetPosBias; // The slider position
 	std::wstring m_strSliderVoltageToSetPosBias;	// The slider position (std::string)
 	
 private: // FLAMENT Variables
@@ -95,6 +94,10 @@ private: // FLAMENT Variables
 	CSliderCtrl m_SliderVoltageToSetFlament;
 	CSpinButtonCtrl m_VoltageToSetSpinCtrlFlament;
 
+	CToolTipCtrl* m_pTips;
+
+	double m_dSliderVoltageToSetPosFlament; // The slider position
+	std::wstring m_strSliderVoltageToSetPosFlament;	// The slider position (std::string)
 
 private:
 	void SetAllSpinCtrlRanges();
@@ -102,6 +105,9 @@ private:
 	void FillComPortList();
 	void FillComPortComboBox();
 	void RemoveZeros(std::wstring& a_wstr);
+	void SetUpSlider(double a_dPos, CSliderCtrl& a_SliderCtrl, std::wstring& a_wstrSliderPos, CEdit& a_Edit, CEdit& a_EditSpin, double a_dDelimiter = 0.0);
+
+
 public:
 	afx_msg void OnBnClickedButtonUpdateCom();
 	afx_msg void OnEnChangeEditVoltageToSetKeybordBias();
@@ -109,4 +115,6 @@ public:
 	afx_msg void OnNMCustomdrawSliderVoltageToSetBias(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnChangeEditVoltageToSetKeybord();
 	afx_msg void OnEnChangeEditVoltageToSetKeybordBias2();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnNMCustomdrawSliderVoltageToSetBias2(NMHDR *pNMHDR, LRESULT *pResult);
 };

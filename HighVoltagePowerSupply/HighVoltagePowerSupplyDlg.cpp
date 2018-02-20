@@ -30,6 +30,8 @@ public:
 // Implementation
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -55,13 +57,15 @@ CHighVoltagePowerSupplyDlg::CHighVoltagePowerSupplyDlg(CWnd* pParent /*=NULL*/)
 	m_ulSliderVoltageToSetPos{ AcceleratorMin },
 	m_strSliderVoltageToSetPos { std::to_wstring(m_ulSliderVoltageToSetPos) },
 	m_dValue{ 0.0 },
-	m_ulSliderVoltageToSetPosBias{ 0.0 }
+	m_dSliderVoltageToSetPosBias{ 0.0 }
 {
 	FillComPortList();
 
 	m_bIsComPortListEmpty = m_ComPortVec.empty();
 
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_pTips = nullptr;
+
 }
 
 void CHighVoltagePowerSupplyDlg::DoDataExchange(CDataExchange* pDX)
@@ -100,6 +104,7 @@ BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_VOLTAGE_TO_SET_BIAS, &CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetBias)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET_BIAS, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias)
 	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS2, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias2)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET_BIAS2, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias2)
 END_MESSAGE_MAP()
 
 
@@ -109,6 +114,12 @@ BOOL CHighVoltagePowerSupplyDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	
+
+	m_pTips = new CToolTipCtrl;
+	m_pTips->Create(this);
+	m_pTips->AddTool(&m_VoltageToSetKeyboard, L"Button 1");
+
+
 	SetAllSpinCtrlRanges();
 	SetAllSliderRanges();
 	FillComPortComboBox();
@@ -325,6 +336,23 @@ void CHighVoltagePowerSupplyDlg::RemoveZeros(std::wstring& a_wstr)
 	for (size_t i = 0; i < 5; ++i) {
 		a_wstr.pop_back();
 	}
+}
+
+void CHighVoltagePowerSupplyDlg::SetUpSlider(double a_dPos, CSliderCtrl & a_SliderCtrl, std::wstring& a_wstrSliderPos, CEdit & a_Edit, CEdit& a_EditSpin, double a_dDelimiter)
+{
+	if (a_dDelimiter == 0.0 || a_dDelimiter < 0) {
+		a_dPos = a_SliderCtrl.GetPos();
+	}
+	else {
+		a_dPos = a_SliderCtrl.GetPos() / a_dDelimiter;
+	}
+	
+	std::wstring tmp = std::to_wstring(a_dPos);
+	RemoveZeros(tmp);
+	a_wstrSliderPos = tmp;
+
+	a_Edit.SetWindowTextW(a_wstrSliderPos.c_str());
+	a_EditSpin.SetWindowTextW(a_wstrSliderPos.c_str());
 }
 
 void CHighVoltagePowerSupplyDlg::FillComPortList()
@@ -616,13 +644,10 @@ void CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias(NMHDR *pNM
 	// TODO: Add your control notification handler code here
 	*pResult = 0;
 
-	m_ulSliderVoltageToSetPosBias = m_SliderVoltageToSetBias.GetPos() / 10.0;
-	std::wstring tmp = std::to_wstring(m_ulSliderVoltageToSetPosBias);
-	RemoveZeros(tmp);
-	m_strSliderVoltageToSetPosBias = tmp;
-
-	m_VoltageToSetKeyboardBias.SetWindowTextW(m_strSliderVoltageToSetPosBias.c_str());
-	m_VoltageToSetSpinBias.SetWindowTextW(m_strSliderVoltageToSetPosBias.c_str());
+	SetUpSlider(m_dSliderVoltageToSetPosBias,
+		m_SliderVoltageToSetBias,
+		m_strSliderVoltageToSetPosBias,
+		m_VoltageToSetKeyboardBias, m_VoltageToSetSpinBias);
 }
 
 
@@ -632,4 +657,40 @@ void CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias2()
 	m_VoltageToSetKeyboardFlament.GetWindowTextW(text);
 	std::wstring wstext = text;
 	double dValue = 0.0;
+}
+
+
+BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+
+BOOL CHighVoltagePowerSupplyDlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	if (m_pTips)
+		m_pTips->RelayEvent(pMsg);
+
+
+	if (pMsg->message == WM_KEYDOWN) {
+		if (pMsg->wParam == VK_RETURN || pMsg->wParam == VK_ESCAPE) {
+			return TRUE;                // Do not process further
+		}
+	}
+
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias2(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	SetUpSlider(m_dSliderVoltageToSetPosFlament, m_SliderVoltageToSetFlament, m_strSliderVoltageToSetPosFlament, m_VoltageToSetKeyboardFlament, m_VoltageToSetSpinFlament);
 }
