@@ -10,8 +10,19 @@
 #include <minwindef.h>
 #include <winperf.h>
 
-const unsigned long AcceleratorMin = 0;
-const unsigned long AcceleratorMax = 30000;
+namespace MinMax {
+	// ACCELERATOR 
+	const unsigned long g_AcceleratorMin = 0;
+	const unsigned long g_AcceleratorMax = 30000;
+
+	// BIAS 
+	const double g_BiasMin = 0.0;
+	const double g_BiasMax = 6000.0;
+
+	// FLAMENT
+	const double g_FlamentMin = 0.0;
+	const double g_FlamentMax = 10.0;
+}
 
 /// this defination for GetComPortList() function
 #define MAX_KEY_LENGTH 255
@@ -93,6 +104,8 @@ private: // FLAMENT Variables
 	CEdit m_VoltageToSetKeyboardFlament;
 	CSliderCtrl m_SliderVoltageToSetFlament;
 	CSpinButtonCtrl m_VoltageToSetSpinCtrlFlament;
+	static int m_SpinCtrlFlamentPos;
+
 
 	CToolTipCtrl* m_pTips;
 
@@ -105,8 +118,9 @@ private:
 	void FillComPortList();
 	void FillComPortComboBox();
 	void RemoveZeros(std::wstring& a_wstr);
-	void SetUpSlider(double a_dPos, CSliderCtrl& a_SliderCtrl, std::wstring& a_wstrSliderPos, CEdit& a_Edit, CEdit& a_EditSpin, double a_dDelimiter = 0.0);
-
+	void SetUpSlider(double a_dPos, CSliderCtrl& a_SliderCtrl, std::wstring& a_wstrSliderPos, CEdit& a_Edit, CEdit& a_EditSpin);
+	void SetUpSliderPosInEditBox(CSliderCtrl& a_SliderCtrl, CEdit& a_Edit);
+	void SetUpSpinCtrl(LPNMUPDOWN pNMUpDown, CSliderCtrl& a_SliderCtrl, CEdit& a_Edit, CSpinButtonCtrl& a_SpinButtonCtrl);
 
 public:
 	afx_msg void OnBnClickedButtonUpdateCom();
@@ -117,4 +131,5 @@ public:
 	afx_msg void OnEnChangeEditVoltageToSetKeybordBias2();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnNMCustomdrawSliderVoltageToSetBias2(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDeltaposSpinVoltageToSetFlament(NMHDR *pNMHDR, LRESULT *pResult);
 };
