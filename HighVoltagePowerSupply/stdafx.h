@@ -37,6 +37,11 @@
 
 
 
+#include <string>
+#include <vector>
+#include <minwindef.h>
+#include <winperf.h>
+#include <bitset>
 
 
 

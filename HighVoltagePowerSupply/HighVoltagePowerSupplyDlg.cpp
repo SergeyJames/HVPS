@@ -68,13 +68,14 @@ CHighVoltagePowerSupplyDlg::CHighVoltagePowerSupplyDlg(CWnd* pParent /* nullptr 
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_pTips = nullptr;
 
+	m_vecRecvData.resize(33);
+	m_vecSendData.resize(33);
 }
 
 void CHighVoltagePowerSupplyDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDOK, m_LogToFileButton);
-	DDX_Control(pDX, IDC_BUTTON_ENABLE, m_EnableButton);
 	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_SPIN, m_VoltageToSetSpin);
 	DDX_Control(pDX, IDC_SPIN_VOLTAGE_TO_SET, m_VoltageToSetSpinCtrl);
 	DDX_Control(pDX, IDC_SLIDER_VOLTAGE_TO_SET, m_SliderVoltageToSet);
@@ -91,6 +92,9 @@ void CHighVoltagePowerSupplyDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS2, m_VoltageToSetKeyboardFlament);
 	DDX_Control(pDX, IDC_SPIN_VOLTAGE_TO_SET_BIAS, m_VoltageToSetSpinCtrlBias);
 	DDX_Control(pDX, IDC_SPIN_VOLTAGE_TO_SET_BIAS2, m_VoltageToSetSpinCtrlFlament);
+	DDX_Control(pDX, IDC_BUTTON_ENABLE, m_ButtonEnableAccelerator);
+	DDX_Control(pDX, IDC_BUTTON_ENABLE_BIAS, m_ButtonEnableBias);
+	DDX_Control(pDX, IDC_BUTTON_ENABLE_FLAMENT, m_ButtonEnableFlament);
 }
 
 BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
@@ -108,6 +112,10 @@ BEGIN_MESSAGE_MAP(CHighVoltagePowerSupplyDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT_VOLTAGE_TO_SET_KEYBORD_BIAS2, &CHighVoltagePowerSupplyDlg::OnEnChangeEditVoltageToSetKeybordBias2)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_VOLTAGE_TO_SET_BIAS2, &CHighVoltagePowerSupplyDlg::OnNMCustomdrawSliderVoltageToSetBias2)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_VOLTAGE_TO_SET_FLAMENT, &CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetFlament)
+	ON_BN_CLICKED(IDC_BUTTON_ENABLE, &CHighVoltagePowerSupplyDlg::OnBnClickedButtonEnable)
+	ON_BN_CLICKED(IDC_BUTTON_ENABLE_BIAS, &CHighVoltagePowerSupplyDlg::OnBnClickedButtonEnableBias)
+	ON_BN_CLICKED(IDC_BUTTON_ENABLE_FLAMENT, &CHighVoltagePowerSupplyDlg::OnBnClickedButtonEnableFlament)
+	ON_CBN_SELENDOK(IDC_COMBO_COM_PORT, &CHighVoltagePowerSupplyDlg::OnCbnSelendokComboComPort)
 END_MESSAGE_MAP()
 
 
@@ -156,6 +164,11 @@ BOOL CHighVoltagePowerSupplyDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+
+
+
+	m_ButtonEnableAccelerator.SetTooltip(_T("Button!"));
+	m_ButtonEnableAccelerator.SetTextColor(RGB(255, 0, 0));
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -420,6 +433,8 @@ void CHighVoltagePowerSupplyDlg::FillComPortList()
 	}
 
 	RegCloseKey(hKey);
+
+	free(PerfData);
 
 	////После того, как имя COM порта получено, дальнейшая работа с ним происходит как с файлом.Но для начала нам надо его настроить
 
@@ -728,5 +743,127 @@ void CHighVoltagePowerSupplyDlg::OnDeltaposSpinVoltageToSetFlament(NMHDR *pNMHDR
 		m_VoltageToSetSpinFlament.SetWindowTextW(tmp.c_str());
 		m_SliderVoltageToSetFlament.SetPos(m_SpinCtrlFlamentPos + 1);
 		m_VoltageToSetKeyboardFlament.SetWindowTextW(tmp.c_str());
+	}
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnBnClickedButtonEnable()
+{
+	m_ButtonEnableAccelerator.SetFaceColor(RGB(255, 0, 0), true);
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnBnClickedButtonEnableBias()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnBnClickedButtonEnableFlament()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void CHighVoltagePowerSupplyDlg::OnCbnSelendokComboComPort()
+{
+	int nCurSel = m_ComPortCmbBox.GetCurSel();
+	std::wstring data = m_ComPortVec.at(nCurSel);
+	//После того, как имя COM порта получено, дальнейшая работа с ним происходит как с файлом.Но для начала нам надо его настроить
+
+	HANDLE Port;   //Дескриптор COM-порта
+				   //Открываем COM-порт
+				   // data - Имя COM-порта
+	Port = CreateFile(data.c_str(), (GENERIC_READ | GENERIC_WRITE), FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+
+	HANDLE SavePort;   //Дескриптор COM-порта
+					   //Открываем COM-порт
+				       // data - Имя COM-порта
+	std::wstring SaveData = m_ComPortVec.at(nCurSel + 1);
+	SavePort = CreateFile(SaveData.c_str(), (GENERIC_READ | GENERIC_WRITE), FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+
+	if (Port == INVALID_HANDLE_VALUE) {
+		MessageBoxA(NULL, "Невозможно открыть последовательный порт", "Error", MB_OK);
+	}
+
+	//Получаем состояние управляющей структуры COM-порта, 
+	//если не удалось выводим сообщение об ошибке и выходим из 
+	//обработчика
+	COMMCONFIG comm;
+	GetCommState(Port, &comm.dcb);
+
+	//Настраиваем управляющую структуру COM-порта
+	comm.dcb.ByteSize = 8;        //Размер байта
+	comm.dcb.Parity = NOPARITY;    //Паритет отключен
+	comm.dcb.StopBits = ONESTOPBIT;//Один стоповый бит
+								   //Можно также воспользоваться стандартным диалоговым
+								   //окном настройки управляющей структуры COM-порта:
+
+								   // CommConfigDialog(data, NULL, &comm); /// временно не нужен
+
+								   //Применяем настроенную структуру к COM-порту, если не 
+								   //удалось выводим сообщение об ошибке 
+	if (!SetCommState(Port, &comm.dcb)) {
+		MessageBoxA(NULL, "Невозможно сконфигурировать последовательный порт", "Error", MB_OK);
+		CloseHandle(Port);
+	}
+
+	//Получаем текущие настройки тайм-аутов COM-порта
+	COMMTIMEOUTS commTimeouts;
+	GetCommTimeouts(Port, &commTimeouts);
+
+	//Перенастраиваем тайм-ауты: 
+	//Максимальный интервал чтения в миллисекундах между 
+	//двумя принимаемыми символами
+	commTimeouts.ReadIntervalTimeout = 100;
+	//Константа в миллисекундах используемая для вычисления 
+	//полного тайм-аута операции чтения
+	commTimeouts.ReadTotalTimeoutConstant = 300;
+	//Множитель используемый для вычисления полного тайм-аута
+	//операции чтения в миллисекундах
+	commTimeouts.ReadTotalTimeoutMultiplier = 50;
+	//Полный максимальный тайм-аут операции чтения 
+	//вычисляется следующим образом //ReadTotalTimeoutConstant + (ReadIntervalTimeout * количество считываемых байт)
+
+	//Устанавливаем тайм-ауты для COM-порта
+	if (!SetCommTimeouts(Port, &commTimeouts)) {
+		MessageBoxA(NULL, ("Невозможно настроить тайм-ауты последовательного порта"), ("Error"), MB_OK);
+		CloseHandle(Port);
+	}
+	//Передача данных по COM - порту выглядит следующим образом :
+
+	DWORD feedback = 0;
+	//LONG lResult; //Помещаем сюда количество данных, которые
+	// необходимо передать
+	//if ((!WriteFile(Port, &data[0], lResult * sizeof(data[0]), &feedback, 0) || feedback != lResult * sizeof(data[/*i*/0]))) {
+	//	CloseHandle(Port);
+	//	Port = INVALID_HANDLE_VALUE;
+	//}
+	//При передаче мы проверяем количество переданных байт, и вообще удалось ли выполнить передачу.
+
+
+	char send[33] = {};
+	std::string str = "test";
+
+	for (size_t i = 0; i < str.size(); ++i) {
+		send[i] = str.at(i);
+	}
+	std::bitset<8> bs;
+	
+	WriteFile(SavePort, &send, sizeof(send), &feedback, NULL);
+
+	char save[33] = {};
+	//Чтение данных можно реализовать следующим образом(лучше это делать по таймеру) :
+	feedback = 0; /*DWORD*/
+	int i = 0;
+	//Попытка чтения первого символа хранящегося в COM-порте
+	ReadFile(Port, &save, sizeof(save), &feedback, NULL);
+
+	//И закрываем порт после работы :
+	if (Port != INVALID_HANDLE_VALUE)
+	{    //Если порт открыт
+		CloseHandle(Port);
 	}
 }

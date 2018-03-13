@@ -3,12 +3,6 @@
 //
 
 #pragma once
-#include "afxwin.h"
-#include "afxcmn.h"
-#include <string>
-#include <vector>
-#include <minwindef.h>
-#include <winperf.h>
 
 namespace MinMax {
 	// ACCELERATOR 
@@ -22,6 +16,12 @@ namespace MinMax {
 	// FLAMENT
 	const double g_FlamentMin = 0.0;
 	const double g_FlamentMax = 10.0;
+
+	const short g_iInternalTempMin = 0;
+	const short g_iInternalTempMax = 255;
+
+	const short g_iHumidityMin = 0;
+	const short g_iHumidityMax = 100;
 }
 
 /// this defination for GetComPortList() function
@@ -58,6 +58,9 @@ public:
 	afx_msg void OnBnClickedOk();
 
 private: // Other Variables
+	std::vector<std::bitset<8>> m_vecRecvData;
+	std::vector<std::bitset<8>> m_vecSendData;
+
 
 	CComboBox m_ComPortCmbBox;
 	CEdit m_InternalTempEdit;
@@ -65,7 +68,6 @@ private: // Other Variables
 	CEdit m_HumidityEdit;
 
 	CButton m_LogToFileButton;
-	CButton m_EnableButton;
 
 	static bool m_bIsComPortListEmpty;
 
@@ -75,6 +77,8 @@ public: // Accelerator Methodes
 
 private: // Accelerator Variables
 
+	CMFCButton m_ButtonEnableAccelerator;
+	
 	CEdit m_VoltageToSetSpin;
 	CEdit m_VoltageToSetKeyboard;
 	CSliderCtrl m_SliderVoltageToSet;
@@ -86,6 +90,8 @@ private: // Accelerator Variables
 	std::vector<std::wstring> m_ComPortVec;
 
 private: // BIAS Variables
+
+	CMFCButton m_ButtonEnableBias;
 
 	CEdit m_VoltageToSetSpinBias;
 	CEdit m_VoltageToSetKeyboardBias;
@@ -99,6 +105,8 @@ private: // BIAS Variables
 	std::wstring m_strSliderVoltageToSetPosBias;	// The slider position (std::string)
 	
 private: // FLAMENT Variables
+
+	CMFCButton m_ButtonEnableFlament;
 
 	CEdit m_VoltageToSetSpinFlament;
 	CEdit m_VoltageToSetKeyboardFlament;
@@ -132,4 +140,8 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnNMCustomdrawSliderVoltageToSetBias2(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposSpinVoltageToSetFlament(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedButtonEnable();
+	afx_msg void OnBnClickedButtonEnableBias();
+	afx_msg void OnBnClickedButtonEnableFlament();
+	afx_msg void OnCbnSelendokComboComPort();
 };
