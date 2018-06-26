@@ -139,6 +139,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Program Files\boost\boost_1_60_0\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -186,6 +187,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ComPort.h" />
     <ClInclude Include="HighVoltagePowerSupply.h" />
     <ClInclude Include="HighVoltagePowerSupplyDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -193,6 +195,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ComPort.cpp" />
     <ClCompile Include="HighVoltagePowerSupply.cpp" />
     <ClCompile Include="HighVoltagePowerSupplyDlg.cpp" />
     <ClCompile Include="stdafx.cpp">

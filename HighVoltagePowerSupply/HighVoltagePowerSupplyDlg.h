@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include "stdafx.h"
+#include "ComPort.h"
 
 namespace MinMax {
 	// ACCELERATOR 
@@ -24,9 +26,6 @@ namespace MinMax {
 	const short g_iHumidityMax = 100;
 }
 
-/// this defination for GetComPortList() function
-#define MAX_KEY_LENGTH 255
-#define MAX_VALUE_NAME 16383
 
 
 // CHighVoltagePowerSupplyDlg dialog
@@ -71,6 +70,11 @@ private: // Other Variables
 
 	static bool m_bIsComPortListEmpty;
 
+	CComPort m_ComPort;
+	int m_nCurComPortIndex;
+	char m_ChSend[33];
+	bool m_bIsConnectedToCom;
+
 public: // Accelerator Methodes
 	afx_msg void OnDeltaposSpinVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMCustomdrawSliderVoltageToSet(NMHDR *pNMHDR, LRESULT *pResult);
@@ -78,20 +82,23 @@ public: // Accelerator Methodes
 private: // Accelerator Variables
 
 	CMFCButton m_ButtonEnableAccelerator;
-	
+	bool m_bIsAcceleratorEnabled;
+
 	CEdit m_VoltageToSetSpin;
 	CEdit m_VoltageToSetKeyboard;
 	CSliderCtrl m_SliderVoltageToSet;
 	CSpinButtonCtrl m_VoltageToSetSpinCtrl;
 
 
-	unsigned long m_ulSliderVoltageToSetPos; // The slider position
+	unsigned long m_ulSliderVoltageToSetPos;	// The slider position
 	std::wstring m_strSliderVoltageToSetPos;	// The slider position (std::string)
 	std::vector<std::wstring> m_ComPortVec;
 
 private: // BIAS Variables
 
 	CMFCButton m_ButtonEnableBias;
+	bool m_bIsBIASEnabled;
+
 
 	CEdit m_VoltageToSetSpinBias;
 	CEdit m_VoltageToSetKeyboardBias;
@@ -107,6 +114,8 @@ private: // BIAS Variables
 private: // FLAMENT Variables
 
 	CMFCButton m_ButtonEnableFlament;
+	bool m_bIsFlamentEnabled;
+
 
 	CEdit m_VoltageToSetSpinFlament;
 	CEdit m_VoltageToSetKeyboardFlament;
@@ -129,6 +138,16 @@ private:
 	void SetUpSlider(double a_dPos, CSliderCtrl& a_SliderCtrl, std::wstring& a_wstrSliderPos, CEdit& a_Edit, CEdit& a_EditSpin);
 	void SetUpSliderPosInEditBox(CSliderCtrl& a_SliderCtrl, CEdit& a_Edit);
 	void SetUpSpinCtrl(LPNMUPDOWN pNMUpDown, CSliderCtrl& a_SliderCtrl, CEdit& a_Edit, CSpinButtonCtrl& a_SpinButtonCtrl);
+	
+	void SetUpAcceleratorSection(std::wstring&& a_wsTooltip, const COLORREF& a_color, BOOL a_bState);
+	void SetUpBIASSection(std::wstring&& a_wsTooltip, const COLORREF& a_color, BOOL a_bState);
+	void SetUpFilamentSection(std::wstring&& a_wsTooltip, const COLORREF& a_color, BOOL a_bState);
+
+
+	void SetButtonTextAndColor(CMFCButton& a_button, bool& a_bCurState);
+	void InsertVoltageValueToSendArray(unsigned long m_ulSliderVoltageToSetPos /*The slider position*/ );
+
+	void ResetSections();
 
 public:
 	afx_msg void OnBnClickedButtonUpdateCom();
